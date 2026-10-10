@@ -52,8 +52,13 @@ public class AuthService {
         employee.setPassword(passwordEncoder.encode(request.getPassword()));
         employee.setOrganization(org);
         
-        employee.setRole(com.geotrack.entity.enums.Role.EMPLOYEE);
-
+        if (request.getRole() != null) {
+            employee.setRole(request.getRole());
+        } else if (org != null) {
+            employee.setRole(com.geotrack.entity.enums.Role.ORG_ADMIN);
+        } else {
+            employee.setRole(com.geotrack.entity.enums.Role.EMPLOYEE);
+        }
         Employee saved = employeeRepository.save(employee);
         return mapToUserResponse(saved);
     }
