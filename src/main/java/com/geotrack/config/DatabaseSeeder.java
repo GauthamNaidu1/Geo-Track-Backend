@@ -51,10 +51,48 @@ public class DatabaseSeeder implements CommandLineRunner {
                 departmentRepository.findByOrganizationId(emp.getOrganization().getId()).stream().findFirst().ifPresent(emp::setDepartment);
                 shiftRepository.findByOrganizationId(emp.getOrganization().getId()).stream().findFirst().ifPresent(emp::setShift);
                 officeRepository.findByOrganizationId(emp.getOrganization().getId()).stream().findFirst().ifPresent(emp::setOffice);
+                seedTeamForOrganization(emp.getOrganization());
             }
             employeeRepository.save(emp);
-            System.out.println("Configured Gautham as ORG_ADMIN with defaults seeded.");
+            System.out.println("Configured Gautham as ORG_ADMIN with defaults and team seeded.");
         });
+    }
+
+    private void seedTeamForOrganization(Organization org) {
+        if (employeeRepository.findByEmail("marcus.manager@geotrack.com").isEmpty()) {
+            Department eng = departmentRepository.findByOrganizationId(org.getId()).stream()
+                    .filter(d -> "Engineering".equals(d.getName())).findFirst().orElse(null);
+            Department ops = departmentRepository.findByOrganizationId(org.getId()).stream()
+                    .filter(d -> "Operations".equals(d.getName())).findFirst().orElse(null);
+            Department hr = departmentRepository.findByOrganizationId(org.getId()).stream()
+                    .filter(d -> "Human Resources".equals(d.getName())).findFirst().orElse(null);
+            Shift shift = shiftRepository.findByOrganizationId(org.getId()).stream().findFirst().orElse(null);
+            Office office = officeRepository.findByOrganizationId(org.getId()).stream().findFirst().orElse(null);
+
+            Employee marcus = createTeamMember("marcus.manager@geotrack.com", "Marcus", "Vance", "Manager@123", Role.MANAGER, org, eng, shift, office, null);
+            Employee sarah = createTeamMember("sarah.ops@geotrack.com", "Sarah", "Jenkins", "Manager@123", Role.MANAGER, org, ops, shift, office, null);
+            createTeamMember("alex.dev@geotrack.com", "Alex", "Rivera", "Employee@123", Role.EMPLOYEE, org, eng, shift, office, marcus);
+            createTeamMember("priya.dev@geotrack.com", "Priya", "Sharma", "Employee@123", Role.EMPLOYEE, org, eng, shift, office, marcus);
+            createTeamMember("david.ops@geotrack.com", "David", "Miller", "Employee@123", Role.EMPLOYEE, org, ops, shift, office, sarah);
+            createTeamMember("elena.hr@geotrack.com", "Elena", "Rostova", "Employee@123", Role.EMPLOYEE, org, hr, shift, office, null);
+        }
+    }
+
+    private Employee createTeamMember(String email, String first, String last, String pwd, Role role, Organization org, Department dept, Shift shift, Office office, Employee manager) {
+        if (employeeRepository.findByEmail(email).isPresent()) return employeeRepository.findByEmail(email).get();
+        Employee emp = new Employee();
+        emp.setEmail(email);
+        emp.setFirstName(first);
+        emp.setLastName(last);
+        emp.setPassword(passwordEncoder.encode(pwd));
+        emp.setRole(role);
+        emp.setStatus(com.geotrack.entity.enums.EmployeeStatus.ACTIVE);
+        emp.setOrganization(org);
+        emp.setDepartment(dept);
+        emp.setShift(shift);
+        emp.setOffice(office);
+        emp.setManager(manager);
+        return employeeRepository.save(emp);
     }
 
     private void seedSuperAdmin() {

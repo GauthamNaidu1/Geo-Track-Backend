@@ -15,7 +15,11 @@ public class WorkLogController {
     @Autowired
     private com.geotrack.repository.WorkLogRepository workLogRepository;
 
+    @Autowired
+    private com.geotrack.repository.EmployeeRepository employeeRepository;
+
     @PostMapping
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> submitWorkLog(@RequestBody java.util.Map<String, String> payload, @org.springframework.security.core.annotation.AuthenticationPrincipal com.geotrack.security.CustomUserDetails user) {
         if (user == null || user.getEmployee() == null) return ResponseEntity.status(401).build();
 
@@ -26,12 +30,15 @@ public class WorkLogController {
             return ResponseEntity.badRequest().body(java.util.Map.of("message", "Work summary is required"));
         }
 
+        com.geotrack.entity.Employee employee = employeeRepository.findById(user.getEmployee().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
         java.time.LocalDate today = java.time.LocalDate.now();
-        com.geotrack.entity.WorkLog log = workLogRepository.findByEmployeeIdAndWorkDate(user.getEmployee().getId(), today)
+        com.geotrack.entity.WorkLog log = workLogRepository.findByEmployeeIdAndWorkDate(employee.getId(), today)
                 .orElseGet(() -> {
                     com.geotrack.entity.WorkLog newLog = new com.geotrack.entity.WorkLog();
-                    newLog.setEmployee(user.getEmployee());
-                    newLog.setOrganization(user.getEmployee().getOrganization());
+                    newLog.setEmployee(employee);
+                    newLog.setOrganization(employee.getOrganization());
                     newLog.setWorkDate(today);
                     return newLog;
                 });
