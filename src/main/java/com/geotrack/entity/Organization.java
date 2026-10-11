@@ -9,6 +9,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Table(name = "organizations")
 public class Organization extends BaseEntity {
 

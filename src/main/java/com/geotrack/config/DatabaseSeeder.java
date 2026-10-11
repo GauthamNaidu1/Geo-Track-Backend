@@ -35,6 +35,26 @@ public class DatabaseSeeder implements CommandLineRunner {
     public void run(String... args) {
         seedSuperAdmin();
         seedDemoAccounts();
+        seedAllOrganizations();
+        configureGauthamAccount();
+    }
+
+    private void seedAllOrganizations() {
+        organizationRepository.findAll().forEach(this::seedDefaultsForOrganization);
+    }
+
+    private void configureGauthamAccount() {
+        employeeRepository.findByEmail("c.gauthamtm@gmail.com").ifPresent(emp -> {
+            emp.setRole(Role.ORG_ADMIN);
+            if (emp.getOrganization() != null) {
+                seedDefaultsForOrganization(emp.getOrganization());
+                departmentRepository.findByOrganizationId(emp.getOrganization().getId()).stream().findFirst().ifPresent(emp::setDepartment);
+                shiftRepository.findByOrganizationId(emp.getOrganization().getId()).stream().findFirst().ifPresent(emp::setShift);
+                officeRepository.findByOrganizationId(emp.getOrganization().getId()).stream().findFirst().ifPresent(emp::setOffice);
+            }
+            employeeRepository.save(emp);
+            System.out.println("Configured Gautham as ORG_ADMIN with defaults seeded.");
+        });
     }
 
     private void seedSuperAdmin() {

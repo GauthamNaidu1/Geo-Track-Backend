@@ -1,5 +1,6 @@
 package com.geotrack.controller;
 
+import com.geotrack.entity.Organization;
 import com.geotrack.entity.Shift;
 import com.geotrack.repository.ShiftRepository;
 import com.geotrack.security.CustomUserDetails;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class ShiftController {
 
     private final ShiftRepository shiftRepository;
+    private final com.geotrack.repository.OrganizationRepository organizationRepository;
 
     @GetMapping
     public ResponseEntity<?> getAllShifts(@AuthenticationPrincipal CustomUserDetails user) {
@@ -36,7 +38,9 @@ public class ShiftController {
     @PostMapping
     public ResponseEntity<?> createShift(@RequestBody Shift shift, @AuthenticationPrincipal CustomUserDetails user) {
         if (user == null || user.getEmployee() == null) return ResponseEntity.status(401).build();
-        shift.setOrganization(user.getEmployee().getOrganization());
+        Organization org = organizationRepository.findById(user.getEmployee().getOrganization().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Organization not found"));
+        shift.setOrganization(org);
         Shift saved = shiftRepository.save(shift);
         return ResponseEntity.ok(Map.of("message", "Shift created", "shift", saved));
     }

@@ -1,6 +1,7 @@
 package com.geotrack.controller;
 
 import com.geotrack.entity.Department;
+import com.geotrack.entity.Organization;
 import com.geotrack.repository.DepartmentRepository;
 import com.geotrack.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class DepartmentController {
 
     private final DepartmentRepository departmentRepository;
+    private final com.geotrack.repository.OrganizationRepository organizationRepository;
 
     @GetMapping
     public ResponseEntity<?> getAllDepartments(@AuthenticationPrincipal CustomUserDetails user) {
@@ -36,7 +38,9 @@ public class DepartmentController {
     @PostMapping
     public ResponseEntity<?> createDepartment(@RequestBody Department department, @AuthenticationPrincipal CustomUserDetails user) {
         if (user == null || user.getEmployee() == null) return ResponseEntity.status(401).build();
-        department.setOrganization(user.getEmployee().getOrganization());
+        Organization org = organizationRepository.findById(user.getEmployee().getOrganization().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Organization not found"));
+        department.setOrganization(org);
         Department saved = departmentRepository.save(department);
         return ResponseEntity.ok(Map.of("message", "Department created", "department", saved));
     }

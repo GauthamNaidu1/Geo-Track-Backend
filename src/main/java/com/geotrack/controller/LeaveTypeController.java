@@ -1,6 +1,7 @@
 package com.geotrack.controller;
 
 import com.geotrack.entity.LeaveType;
+import com.geotrack.entity.Organization;
 import com.geotrack.repository.LeaveTypeRepository;
 import com.geotrack.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class LeaveTypeController {
 
     private final LeaveTypeRepository leaveTypeRepository;
+    private final com.geotrack.repository.OrganizationRepository organizationRepository;
 
     @GetMapping
     public ResponseEntity<?> getAllLeaveTypes(@AuthenticationPrincipal CustomUserDetails user) {
@@ -36,7 +38,9 @@ public class LeaveTypeController {
     @PostMapping
     public ResponseEntity<?> createLeaveType(@RequestBody LeaveType leaveType, @AuthenticationPrincipal CustomUserDetails user) {
         if (user == null || user.getEmployee() == null) return ResponseEntity.status(401).build();
-        leaveType.setOrganization(user.getEmployee().getOrganization());
+        Organization org = organizationRepository.findById(user.getEmployee().getOrganization().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Organization not found"));
+        leaveType.setOrganization(org);
         LeaveType saved = leaveTypeRepository.save(leaveType);
         return ResponseEntity.ok(Map.of("message", "Leave Type created", "leaveType", saved));
     }

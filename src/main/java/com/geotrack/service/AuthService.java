@@ -30,6 +30,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+    private final com.geotrack.config.DatabaseSeeder databaseSeeder;
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
@@ -43,6 +44,7 @@ public class AuthService {
             org.setName(request.getOrganizationName());
             org.setEmail(request.getEmail());
             org = organizationRepository.save(org);
+            databaseSeeder.seedDefaultsForOrganization(org);
         }
 
         Employee employee = new Employee();

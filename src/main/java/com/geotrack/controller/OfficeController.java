@@ -1,6 +1,7 @@
 package com.geotrack.controller;
 
 import com.geotrack.entity.Office;
+import com.geotrack.entity.Organization;
 import com.geotrack.repository.OfficeRepository;
 import com.geotrack.security.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class OfficeController {
 
     private final OfficeRepository officeRepository;
+    private final com.geotrack.repository.OrganizationRepository organizationRepository;
 
     @GetMapping
     public ResponseEntity<?> getAllOffices(@AuthenticationPrincipal CustomUserDetails user) {
@@ -36,7 +38,9 @@ public class OfficeController {
     @PostMapping
     public ResponseEntity<?> createOffice(@RequestBody Office office, @AuthenticationPrincipal CustomUserDetails user) {
         if (user == null || user.getEmployee() == null) return ResponseEntity.status(401).build();
-        office.setOrganization(user.getEmployee().getOrganization());
+        Organization org = organizationRepository.findById(user.getEmployee().getOrganization().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Organization not found"));
+        office.setOrganization(org);
         try {
             Office saved = officeRepository.save(office);
             return ResponseEntity.ok(Map.of("message", "Office created", "office", saved));
